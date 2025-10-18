@@ -1,0 +1,8 @@
+.venv
+.vite
+.env
+**\__pycache__
+bot.log
+tests
+tokens.py
+helpers.py
