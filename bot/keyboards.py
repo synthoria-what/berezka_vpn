@@ -1,5 +1,3 @@
-from operator import call
-from winreg import KEY_WOW64_32KEY
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 

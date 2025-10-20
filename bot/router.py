@@ -7,7 +7,7 @@ from aiogram.types import Message, LabeledPrice, CallbackQuery
 from keyboards import current_sub_tariff, current_sub_tariff, menu_keyboard, sub_tariff
 from config import config, TariffConfig
 from logger import Logger
-from payments import create_payment
+from payments import create_payment, create_payment_test
 from proxy_client import ProxyClient
 
 from faker import Faker
@@ -41,7 +41,7 @@ async def create_payment_message(handler: CallbackQuery, tariff_id: str):
     tariff = tariff_config.tariffs[tariff_id]
     logger.info(f"tariff: id:{tariff_id}")
     duration_days = tariff_config.get_days(tariff.duration_seconds)
-    yookassa_qr_url, _ = create_payment(tariff.price_rub, handler.message.chat.id, "sbp")
+    yookassa_qr_url, _ = create_payment_test(tariff.price_rub, handler.message.chat.id, tariff_id, "bank_card")
     # yookassa_card_url, _ = create_payment(tariff.price_rub, handler.message.chat.id)
     sub_link = await invoice_link(tariff.price_stars, tariff_config.MONTH)
     await handler.message.answer(text=f"<b>Вы выбрали тариф:</b> {tariff.name}\n"
@@ -58,15 +58,10 @@ async def hello(message: Message):
     await message.answer(f"Привет, {message.from_user.first_name}.\nЭто бот для покупки подписки на впн", reply_markup=menu_keyboard())
 
 
-@router.message(F.text == "/admin")
+@router.message(Command("admin"))
 async def get_users(message: Message):
-    logger.info("create_user")
-    username = f"{faker.word()}_{faker.word()}"
-    data = 0
-    expire = 0
-    new_user_link = await proxy.create_user(username, data, expire)
-    await message.answer(f"Ваша подписка: {new_user_link}")
-    
+    logger.info("admin-panel")
+
     
 @router.message(F.text == "Купить")
 async def buy_tariff(message: Message):

@@ -74,6 +74,7 @@ class UserResponseF:
     used_traffic: str
     sub_link: str
     created_at: str
+    note: str
 
 
 class TariffConfig:
@@ -123,43 +124,51 @@ config = Config()
 
 
 def payment_config(amount: int, confirmation_type: str, 
-                   type_payment: str, chat_id: int, payment_id: int) -> dict:
-    if type_payment == "sbp":
-        config = {
-                "amount": {
-                    "value": str(amount),
-                    "currency": "RUB",
-                },
-                "confirmation": {
-                    "type": confirmation_type,
-                    "return_url": "https://t.me/KittyVPN_bot",
-                },
-                "payment_method_data": {
-                    "type": type_payment,
-                },
-                "capture": True,
-                "description": "Оплата подписки на платные услуги телеграм бота",
-                "metadata": {
-                    "chat_id": str(chat_id),
-                    "order_id": payment_id,
-                }
+                   type_payment: str, chat_id: int, payment_id: int,
+                   tariff_type: str) -> dict:
+    config = {
+            "amount": {
+                "value": str(amount),
+                "currency": "RUB",
+            },
+            "confirmation": {
+                "type": confirmation_type,
+                "return_url": "https://t.me/test_invite_send_bot",
+            },
+            "payment_method_data": {
+                "type": type_payment,
+            },
+            "capture": True,
+            "description": "Оплата подписки на платные услуги телеграм бота",
+            "metadata": {
+                "tariff_type": tariff_type,
+                "chat_id": str(chat_id),
+                "order_id": str(payment_id),
             }
-    else:
-        config = {
-                "amount": {
-                    "value": str(amount),
-                    "currency": "RUB",
-                },
-                "confirmation": {
-                    "type": confirmation_type,
-                    "return_url": "https://t.me/KittyVPN_bot",
-                },
-                "capture": True,
-                "description": "Оплата подписки на платные услуги телеграм бота",
-                "metadata": {
-                    "chat_id": str(chat_id),
-                    "order_id": payment_id,
-                }
+        }
+        
+    return config
+
+
+def payment_config_test(amount: int, confirmation_type: str, 
+                   chat_id: int, payment_id: int,
+                   tariff_type: str) -> dict:
+    config = {
+            "amount": {
+                "value": str(amount),
+                "currency": "RUB",
+            },
+            "confirmation": {
+                "type": confirmation_type,
+                "return_url": "https://t.me/test_invite_send_bot",
+            },
+            "capture": True,
+            "description": "Оплата подписки на платные услуги телеграм бота",
+            "metadata": {
+                "tariff_type": tariff_type,
+                "chat_id": str(chat_id),
+                "order_id": str(payment_id),
             }
+        }
         
     return config
