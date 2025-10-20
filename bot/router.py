@@ -2,18 +2,20 @@ from ast import Call
 from ctypes import LibraryLoader
 from re import L
 from aiogram import Router, Bot, F
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, LabeledPrice, CallbackQuery
 from keyboards import current_sub_tariff, current_sub_tariff, menu_keyboard, sub_tariff
 from config import config, TariffConfig
 from logger import Logger
 from payments import create_payment
+from proxy_client import ProxyClient
 
 
 logger = Logger.getinstance()
 router = Router()
 bot = Bot(config.tg_token)
 tariff_config = TariffConfig()
+proxy = ProxyClient()
 
 
 async def invoice_link(price: int, duration: int) -> str:
@@ -52,6 +54,13 @@ async def create_payment_message(handler: CallbackQuery, tariff_id: str):
 async def hello(message: Message):
     logger.info("command /start")
     await message.answer(f"Привет, {message.from_user.first_name}.\nЭто бот для покупки подписки на впн", reply_markup=menu_keyboard())
+
+
+@router.message(Command("/admin"))
+async def get_users(message: Message):
+    logger.info("get_users_proxy")
+    users = await proxy.get_users()
+    print(users)
 
 
 @router.message(F.text == "Купить")

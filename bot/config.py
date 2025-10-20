@@ -5,22 +5,26 @@ from logger import Logger
 
 load_dotenv()
 logger = Logger.getinstance()
+from pydantic_settings import BaseSettings
+from pydantic import Field
 
+class Config(BaseSettings):
+    tg_token: str
+    pg_login: str
+    pg_passw: str
+    pg_port: str
+    pg_host: str
+    pg_db_name: str
+    yookassa_sk: str = Field(alias="YOOKASSA_SECRET_KEY")
+    yookassa_shop_id: str = Field(alias="YOOKASSA_SHOP_ID")
+    yookassa_sk_test: str = Field(alias="YOOKASSA_SECRET_KEY_TEST")
+    yookassa_shop_id_test: str = Field(alias="YOOKASSA_SHOP_ID_TEST")
+    mb_username: str = Field(alias="MARZBAN_USERNAME")
+    mb_passw: str = Field(alias="MARZBAN_PASSW")
+    mb_api_url: str = Field(alias="MARZBAN_API_URL")
 
-class Config:
-    def __init__(self,
-                 tg_token: str,
-                 pg_login: str,
-                 pg_passw: str,
-                 pg_port: str,
-                 pg_host: str,
-                 pg_db_name: str):
-        self.tg_token = tg_token
-        self.pg_login = pg_login
-        self.pg_passw = pg_passw
-        self.pg_port = pg_port
-        self.pg_host = pg_host
-        self.pg_db_name = pg_db_name
+    class Config:
+        env_file = ".env"
 
 
 class SubPriceStars:
@@ -102,14 +106,7 @@ class TariffConfig:
     def get_days(self, seconds: int) -> int:
         return seconds // self.DAY
 
-config = Config(
-    tg_token=os.getenv("TG_TOKEN"),
-    pg_login=os.getenv("PG_LOGIN"),
-    pg_passw=os.getenv("PG_PASSW"),
-    pg_port=os.getenv("PG_HOST"),
-    pg_host=os.getenv("PG_PORT"),
-    pg_db_name=os.getenv("PG_DB_NAME")
-)
+config = Config()
 
 
 def payment_config(amount: int, confirmation_type: str, 

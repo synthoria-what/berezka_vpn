@@ -5,19 +5,17 @@ from yookassa import Configuration, Payment
 from logger import Logger
 from dotenv import load_dotenv
 from typing import Literal
-from config import payment_config
+from config import payment_config, config
 
 load_dotenv()
 
 logger = Logger.getinstance()
 
-acc_id = os.getenv("YOOKASSA_SHOP_ID")
-secret_key = os.getenv("YOOKASSA_SECRET_KEY")
 
-# Configuration.account_id = acc_id
-# Configuration.secret_key = secret_key
-Configuration.account_id = "1041305"
-Configuration.secret_key = "test_PNTvM-9eEgTUUfjT6PnevgVi3kkTQKWJ3zcEYs2FHm4"
+# Configuration.account_id = config.yookassa_shop_id
+# Configuration.secret_key = config.yookassa_sk
+Configuration.account_id = config.yookassa_shop_id_test
+Configuration.secret_key = config.yookassa_sk_test
 
 def create_payment(amount: int, chat_id: int, 
                    type_payment: Literal["bank_card", "sbp"] = "bank_card"):

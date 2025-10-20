@@ -1,0 +1,5 @@
+aiogram
+sqlalchemy
+marzban
+yookassa
+pydantic-settings
