@@ -19,22 +19,24 @@ def menu_keyboard() -> ReplyKeyboardMarkup:
     
     return keyboard
 
-def sub_rate() -> InlineKeyboardMarkup:
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="1", callback_data="first_rate"), 
-                                                      InlineKeyboardButton(text="3", callback_data="third_rate")],
-                                                      [InlineKeyboardButton(text="2", callback_data="second_rate"),
-                                                       InlineKeyboardButton(text="4", callback_data="fourth_rate")]])
+def sub_tariff() -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="1", callback_data="sub:first_tariff"), 
+                                                      InlineKeyboardButton(text="3", callback_data="sub:third_tariff")],
+                                                      [InlineKeyboardButton(text="2", callback_data="sub:second_tariff"),
+                                                       InlineKeyboardButton(text="4", callback_data="sub:fourth_tariff")]])
     return keyboard
 
 
-def current_sub_rate(sub_link: str, price: int) -> InlineKeyboardMarkup:
+def current_sub_tariff(invoice_link: str, yookassa_qr_url: str) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardBuilder()
 
-    btn_tg_sub = InlineKeyboardButton(text="Оплатить звездами", url=sub_link)
-    btn_yookassa_payment = InlineKeyboardButton(text="Оплатить с помощью карты", callback_data=f"yookassa_payment:{price}")
+    btn_tg_tariff = InlineKeyboardButton(text="Оплатить звездами", url=invoice_link)
+    btn_yookassa_qr_payment = InlineKeyboardButton(text="Оплатить по СБП", url=yookassa_qr_url)
+    # btn_yookassa_card_payment = InlineKeyboardButton(text="Оплатить СБП", url=yookassa_card_url)
 
-    keyboard.add(btn_tg_sub)
-    keyboard.add(btn_yookassa_payment)
+    keyboard.add(btn_tg_tariff)
+    keyboard.add(btn_yookassa_qr_payment)
+    # keyboard.add(btn_yookassa_card_payment)
     keyboard.adjust(1)
 
     return keyboard.as_markup()
