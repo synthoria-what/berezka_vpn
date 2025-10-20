@@ -10,12 +10,14 @@ from logger import Logger
 from payments import create_payment
 from proxy_client import ProxyClient
 
+from faker import Faker
 
 logger = Logger.getinstance()
 router = Router()
 bot = Bot(config.tg_token)
 tariff_config = TariffConfig()
 proxy = ProxyClient()
+faker = Faker()
 
 
 async def invoice_link(price: int, duration: int) -> str:
@@ -56,13 +58,16 @@ async def hello(message: Message):
     await message.answer(f"Привет, {message.from_user.first_name}.\nЭто бот для покупки подписки на впн", reply_markup=menu_keyboard())
 
 
-@router.message(Command("/admin"))
+@router.message(F.text == "/admin")
 async def get_users(message: Message):
-    logger.info("get_users_proxy")
-    users = await proxy.get_users()
-    print(users)
-
-
+    logger.info("create_user")
+    username = f"{faker.word()}_{faker.word()}"
+    data = 0
+    expire = 0
+    new_user_link = await proxy.create_user(username, data, expire)
+    await message.answer(f"Ваша подписка: {new_user_link}")
+    
+    
 @router.message(F.text == "Купить")
 async def buy_tariff(message: Message):
     logger.info('reply-button "Купить"')

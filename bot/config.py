@@ -65,6 +65,15 @@ class Tariff:
     price_rub: int
     price_stars: int
     duration_seconds: int
+    data_limit: int
+
+@dataclass
+class UserResponseF:
+    username: str
+    status: str
+    used_traffic: str
+    sub_link: str
+    created_at: str
 
 
 class TariffConfig:
@@ -78,28 +87,32 @@ class TariffConfig:
                 name="1 месяц",
                 price_rub=89,
                 price_stars=1,
-                duration_seconds=self.MONTH
+                duration_seconds=self.MONTH,
+                data_limit=0
             ),
             "second_tariff": Tariff(
                 id="second_tariff",
                 name="3 месяца",
                 price_rub=199,
                 price_stars=1,
-                duration_seconds=self.MONTH * 3
+                duration_seconds=self.MONTH * 3,
+                data_limit=0
             ),
             "third_tariff": Tariff(
                 id="third_tariff",
                 name="6 месяцев",
                 price_rub=359,
                 price_stars=1,
-                duration_seconds=self.MONTH * 6
+                duration_seconds=self.MONTH * 6,
+                data_limit=0
             ),
             "fourth_tariff": Tariff(
                 id="fourth_tariff",
                 name="12 месяцев",
                 price_rub=699,
                 price_stars=1,
-                duration_seconds=self.MONTH * 12
+                duration_seconds=self.MONTH * 12,
+                data_limit=0
             )
         }
 
