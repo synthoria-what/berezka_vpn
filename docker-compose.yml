@@ -1,0 +1,19 @@
+services:
+  webhook:
+    build: .
+    container_name: myapp
+    expose:
+      - "8443"  # доступно другим контейнерам
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-proxy
+    ports:
+      - "8443:443"  # проброс 443 контейнера на 8443 хоста
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/letsencrypt  # скопируй сертификаты в папку certs
+    depends_on:
+      - webhook
+    restart: unless-stopped

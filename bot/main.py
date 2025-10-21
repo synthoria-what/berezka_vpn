@@ -1,6 +1,7 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from config import config
+from data.db_core import SessionLocal
 
 from router import router
 from logger import Logger

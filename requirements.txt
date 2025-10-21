@@ -1,7 +1,13 @@
 aiogram
 sqlalchemy
+asyncpg
+aiosqlite
 marzban
 yookassa
 pydantic-settings
 python-dotenv
 faker
+fastapi
+uvicorn
+alembic
+
