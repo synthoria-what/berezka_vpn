@@ -3,3 +3,5 @@ sqlalchemy
 marzban
 yookassa
 pydantic-settings
+python-dotenv
+faker
