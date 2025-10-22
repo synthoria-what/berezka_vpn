@@ -36,17 +36,39 @@ class SqlQueries:
             await session.commit()
             return "Пользотаель создан"
         
-    async def delete_user(self, username: str | None = None, tg_id: int | None = None):
+    async def delete_user(self, tg_id: int):
         async with self.session as session:
             logger.info("sql, delete_user")
             stmt = delete(User)
 
-            if username:
-                stmt = stmt.where(User.username == username)
-            elif tg_id:
+            if tg_id:
                 stmt = stmt.where(User.telegram_chat_id == tg_id)
             else:
-                raise ValueError("username или tg_id должны быть указаны")
+                raise ValueError("tg_id должен быть указан")
 
             await session.execute(stmt)
+            await session.commit()
+
+    
+    async def get_user(self, tg_id: int) -> User:
+        async with self.session as session:
+            logger.info("sql, get_user")
+            user = await session.scalar(select(User).where(User.telegram_chat_id == tg_id))
+            if user:
+                return user
+            else:
+                return None
+            
+
+    async def edit_user(self, tg_id: int, **kwargs) -> None:
+        async with self.session as session:
+            logger.info("sql, edit_user")
+            user = await session.scalar(select(User).where(User.telegram_chat_id == tg_id))
+            if not user:
+                return None
+            
+            for key, value in kwargs.items():
+                if hasattr(user, key):
+                    setattr(user, key, value)
+
             await session.commit()

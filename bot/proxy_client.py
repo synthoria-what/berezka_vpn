@@ -46,13 +46,35 @@ class ProxyClient:
         await self.get_token()
         return await self.api.get_user(username, ProxyClient.TOKEN)
     
-    async def create_user(self, username: str, data_limit: int, expire: int) -> UserCreate:
+    async def create_user(self, username: str, **kwargs) -> UserCreate:
         await self.get_token()
-        user = UserCreate(username=username, 
-                          proxies={"vless": ProxySettings(flow="xtls-rprx-vision")},
-                          inbounds={"vless": ["VLESS TCP REALITY"]},
-                          data_limit=data_limit,
-                          expire=expire)
+        base_params = dict(
+                username=username,
+                proxies={"vless": ProxySettings(flow="xtls-rprx-vision")},
+                inbounds={"vless": ["VLESS TCP REALITY"]},
+            )
+        user = UserCreate(**base_params, **kwargs)
         add_user = await self.api.add_user(user, ProxyClient.TOKEN)
-        # print(add_user.subscription_url)s
         return add_user.subscription_url
+    
+    async def delete_user(self, username: str) -> None:
+        await self.get_token()
+        await self.api.remove_user(username, ProxyClient.TOKEN)
+        return
+    
+    async def edit_user(self, username: str, **kwargs) -> None:
+        """
+        expire: int - Параметр длительности подписки
+
+        data_limit: int - Объем трафика подписки
+
+        note: str - Описание ключа
+
+        status: str - Статус ключа
+
+        """
+        await self.get_token()
+        user = UserModify(username=username, **kwargs)
+        await self.api.modify_user(username, user, ProxyClient.TOKEN)
+        
+

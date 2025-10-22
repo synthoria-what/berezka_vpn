@@ -1,7 +1,7 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from config import config
-from data.db_core import SessionLocal
+from middleware import UserDataMiddleware, LoggingBotMiddleware, RateLimitMiddleware
 
 from router import router
 from logger import Logger
@@ -10,6 +10,9 @@ from logger import Logger
 logger = Logger.getinstance()
 bot = Bot(config.tg_token)
 dp = Dispatcher()
+dp.message.middleware(UserDataMiddleware())
+dp.message.middleware(LoggingBotMiddleware())
+dp.message.middleware(RateLimitMiddleware())
 
 
 async def start() -> None:
