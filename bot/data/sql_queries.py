@@ -71,3 +71,4 @@ class SqlQueries:
                     setattr(user, key, value)
 
             await session.commit()
+            return user

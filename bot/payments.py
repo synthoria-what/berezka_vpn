@@ -40,7 +40,7 @@ def create_payment_test(amount: int, username: str, chat_id: int, tariff_id: str
     metadata = {
         "username": username,
         "chat_id": chat_id,
-        "tariff_id": tariff_id,
+        "tariff_type": tariff_id,
         **extra  # можно добавить всё, что хочешь
     }
 

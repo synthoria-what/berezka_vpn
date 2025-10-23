@@ -87,12 +87,13 @@ async def create_payment_message(handler: CallbackQuery, tariff_id: str):
 async def hello(message: Message):
     check_ref_url = message.text.split(" ")
     if len(check_ref_url) > 1 and message.chat.id != int(check_ref_url[-1]):
-        logger.warn("Пользователь перешел по реферальной ссылке")
+        logger.warning("Пользователь перешел по реферальной ссылке")
         logger.info(f"ref_id={check_ref_url[-1]}")
         ref_user = await sql_queries.get_user(check_ref_url[-1])
         if ref_user:
             print(ref_user.users_invited)
-            await sql_queries.edit_user(message.chat.id, users_invited=ref_user.users_invited + 1)
+            user = await sql_queries.edit_user(int(check_ref_url[-1]), users_invited=ref_user.users_invited + 1)
+            logger.info(f"user-data: {user.users_invited}")
     logger.info("command /start")
     fake_username = faker.domain_name(2)
     fake_username = fake_username.split(".")[1]
@@ -127,12 +128,12 @@ async def profile(message: Message, user_data: User):
     api_user = await proxy.get_user(user_data.username)
     expire_str = (
     "Нет срока" if api_user.expire == None
-    else f"🕒 Действует до: `{datetime.fromtimestamp(api_user.expire).strftime('%Y-%m-%d')}`"
+    else f"{datetime.fromtimestamp(api_user.expire).strftime('%Y-%m-%d')}"
     )
     await message.answer("Данные по вашей подписке:\n"
                         f"🕒 Действует до: `{expire_str}`\n"
-                        "🌍 Сервер: 🇸🇪 Швеция\n"
-                        "💾 Использовано трафика: \n"
+                        "🌍 Сервер: Хельсинки\n"
+                       f"💾 Использовано трафика: {api_user.used_traffic}\n"
                         "\n"
                         "🔗 Ваша реферальная ссылка:\n"
                         f"`https://t.me/test_invite_send_bot?start={message.chat.id}`\n"

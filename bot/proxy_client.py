@@ -1,7 +1,7 @@
 import asyncio
 from marzban import MarzbanAPI, UserCreate, UserModify, ProxySettings, UsersResponse, UserResponse
 from logger import Logger
-from config import config, UserResponseF
+from config import config, UserResponseF, TariffConfig
 
 logger = Logger.getinstance()
 class ProxyClient:
@@ -59,10 +59,9 @@ class ProxyClient:
     
     async def delete_user(self, username: str) -> None:
         await self.get_token()
-        await self.api.remove_user(username, ProxyClient.TOKEN)
-        return
+        return await self.api.remove_user(username, ProxyClient.TOKEN)
     
-    async def edit_user(self, username: str, **kwargs) -> None:
+    async def edit_user(self, username: str, **kwargs: int) -> None:
         """
         expire: int - Параметр длительности подписки
 
@@ -74,9 +73,9 @@ class ProxyClient:
 
         """
         try:
+            logger.warning(f"kwargs data: {kwargs}")
             await self.get_token()
             user = UserModify(username=username, **kwargs)
-            await self.api.modify_user(username, user, ProxyClient.TOKEN)
+            return await self.api.modify_user(username, user, ProxyClient.TOKEN)
         except Exception as ex:
             logger.info(f"Произошла ошибка при обновлении подписки: {ex}")
-
