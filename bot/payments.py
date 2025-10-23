@@ -11,10 +11,10 @@ load_dotenv()
 logger = Logger.getinstance()
 
 
-# Configuration.account_id = config.yookassa_shop_id
-# Configuration.secret_key = config.yookassa_sk
-Configuration.account_id = config.yookassa_shop_id_test
-Configuration.secret_key = config.yookassa_sk_test
+Configuration.account_id = config.yookassa_shop_id
+Configuration.secret_key = config.yookassa_sk
+# Configuration.account_id = config.yookassa_shop_id_test
+# Configuration.secret_key = config.yookassa_sk_test
 
 def create_payment(amount: int, chat_id: int, 
                    type_payment: str = "sbp"):

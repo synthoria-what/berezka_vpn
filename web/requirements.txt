@@ -1,0 +1,7 @@
+aiogram
+marzban
+pydantic-settings
+python-dotenv
+fastapi
+uvicorn
+

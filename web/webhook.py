@@ -3,7 +3,6 @@ from aiogram import Bot
 from logger import Logger
 from proxy_client import ProxyClient
 from config import TariffConfig, config
-import requests
 
 app = FastAPI()
 logger = Logger.getinstance()

@@ -1,14 +1,28 @@
 services:
   webhook:
     build: .
-    container_name: myapp
+    container_name: berezka_webhook
     expose:
       - "8443"  # доступно другим контейнерам
     restart: unless-stopped
+    depends_on:
+      - postgres
+    networks:
+      - berezka_net
+
+  bot:
+    build: /bot
+    container_name: berezka_vpn
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    networks:
+      - berezka_net
+
 
   nginx:
     image: nginx:latest
-    container_name: nginx-proxy
+    container_name: berezka_proxy
     ports:
       - "8443:443"  # проброс 443 контейнера на 8443 хоста
     volumes:
@@ -17,3 +31,36 @@ services:
     depends_on:
       - webhook
     restart: unless-stopped
+    networks:
+      - berezka_net
+
+
+  postgres:
+    image: postgres:17
+    container_name: berezka_postgresql
+    environment:
+      POSTGRES_DB: "berezka_vpn"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "pass"
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+
+    networks:
+      - berezka_net
+
+  migrations:
+    build: .
+    container_name: berezka_migrations
+    command: alembic upgrade head
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:pass@postgres:5432/berezka_vpn
+
+
+networks:
+  berezka_net:
+    driver: bridge
