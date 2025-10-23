@@ -11,8 +11,11 @@ logger = Logger.getinstance()
 bot = Bot(config.tg_token)
 dp = Dispatcher()
 dp.message.middleware(UserDataMiddleware())
+dp.callback_query.middleware(UserDataMiddleware())
 dp.message.middleware(LoggingBotMiddleware())
+dp.callback_query.middleware(LoggingBotMiddleware())
 dp.message.middleware(RateLimitMiddleware())
+dp.callback_query.middleware(RateLimitMiddleware())
 
 
 async def start() -> None:

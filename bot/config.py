@@ -1,4 +1,6 @@
+from datetime import datetime
 import os
+import time
 from attr import dataclass
 from dotenv import load_dotenv
 from logger import Logger
@@ -60,15 +62,6 @@ class SubDuration:
         return day
 
 @dataclass
-class Tariff:
-    id: str
-    name: str
-    price_rub: int
-    price_stars: int
-    duration_seconds: int
-    data_limit: int
-
-@dataclass
 class UserResponseF:
     username: str
     status: str
@@ -77,99 +70,112 @@ class UserResponseF:
     created_at: str
     note: str
 
+@dataclass
+class Tariff:
+    id: str
+    name: str
+    price_rub: int
+    price_stars: int
+    duration: int  # длительность в секундах (а не expire)
+    data_limit: int = 0
+
 
 class TariffConfig:
+    """Универсальный конфиг тарифов для VPN-прокси и Telegram-подписок"""
+
     DAY = 60 * 60 * 24
     MONTH = DAY * 30
 
     def __init__(self):
-        self.tariffs = {
+        self.tariffs: dict[str, Tariff] = {
             "first_tariff": Tariff(
                 id="first_tariff",
                 name="1 месяц",
                 price_rub=89,
                 price_stars=1,
-                duration_seconds=self.MONTH,
-                data_limit=0
+                duration=self.MONTH,
             ),
             "second_tariff": Tariff(
                 id="second_tariff",
                 name="3 месяца",
                 price_rub=199,
-                price_stars=1,
-                duration_seconds=self.MONTH * 3,
-                data_limit=0
+                price_stars=3,
+                duration=self.MONTH * 3,
             ),
             "third_tariff": Tariff(
                 id="third_tariff",
                 name="6 месяцев",
                 price_rub=359,
-                price_stars=1,
-                duration_seconds=self.MONTH * 6,
-                data_limit=0
+                price_stars=6,
+                duration=self.MONTH * 6,
             ),
             "fourth_tariff": Tariff(
                 id="fourth_tariff",
                 name="12 месяцев",
                 price_rub=699,
-                price_stars=1,
-                duration_seconds=self.MONTH * 12,
-                data_limit=0
+                price_stars=12,
+                duration=self.MONTH * 12,
             )
         }
 
-    def get_days(self, seconds: int) -> int:
-        return seconds // self.DAY
+    def get_proxy_config(self, tariff_id: str) -> dict:
+        """Формирует конфиг для прокси: expire в Unix time"""
+        tariff = self.tariffs[tariff_id]
+        current_time = int(time.time())
+        return {
+            "expire": current_time + tariff.duration,
+            "data_limit": tariff.data_limit
+        }
+
+    def get_subscription_config(self, tariff_id: str) -> dict:
+        """Формирует конфиг для Telegram подписки"""
+        tariff = self.tariffs[tariff_id]
+        # Telegram поддерживает только 1 месяц
+        return {
+            "expire": self.MONTH,
+            "price_stars": tariff.price_stars,
+        }
+        
+    def get_days(self, duration: int) -> int:
+        return duration // self.DAY
 
 config = Config()
 
 
-def payment_config(amount: int, confirmation_type: str, 
-                   type_payment: str, chat_id: int, payment_id: int,
-                   tariff_type: str) -> dict:
+def payment_config(amount: int, **kwargs) -> dict:
     config = {
             "amount": {
                 "value": str(amount),
                 "currency": "RUB",
             },
             "confirmation": {
-                "type": confirmation_type,
+                "type": "qr",
                 "return_url": "https://t.me/test_invite_send_bot",
             },
             "payment_method_data": {
-                "type": type_payment,
+                "type": "sbp",
             },
             "capture": True,
             "description": "Оплата подписки на платные услуги телеграм бота",
-            "metadata": {
-                "tariff_type": tariff_type,
-                "chat_id": str(chat_id),
-                "order_id": str(payment_id),
-            }
+            "metadata": kwargs
         }
         
     return config
 
 
-def payment_config_test(amount: int, confirmation_type: str, 
-                   chat_id: int, payment_id: int,
-                   tariff_type: str) -> dict:
+def payment_config_test(amount: int, **kwargs) -> dict:
     config = {
             "amount": {
                 "value": str(amount),
                 "currency": "RUB",
             },
             "confirmation": {
-                "type": confirmation_type,
+                "type": "redirect",
                 "return_url": "https://t.me/test_invite_send_bot",
             },
             "capture": True,
             "description": "Оплата подписки на платные услуги телеграм бота",
-            "metadata": {
-                "tariff_type": tariff_type,
-                "chat_id": str(chat_id),
-                "order_id": str(payment_id),
-            }
+            "metadata": kwargs,
         }
         
     return config

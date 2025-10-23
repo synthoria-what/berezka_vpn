@@ -32,18 +32,22 @@ def create_payment(amount: int, chat_id: int,
     return payment.confirmation.confirmation_data, payment.id
 
 
-def create_payment_test(amount: int, chat_id: int, 
-                        tariff_type: str = "first_tariff", type_payment: str = "sbp"):
+def create_payment_test(amount: int, username: str, chat_id: int, tariff_id: str, **extra):
     logger.info(f"create_payment")
     payment_id = str(uuid.uuid4())
-    confirmation_type = "redirect"
-    if type_payment == "sbp":
-        confirmation_type = "qr"
 
-    payment = Payment.create(payment_config_test(
-        amount, confirmation_type,
-         chat_id, payment_id,tariff_type),payment_id
-        )
+    # Собираем метаданные
+    metadata = {
+        "username": username,
+        "chat_id": chat_id,
+        "tariff_id": tariff_id,
+        **extra  # можно добавить всё, что хочешь
+    }
 
-    logger.info(f"payments_data: {payment.confirmation.confirmation_url}")
+    payment = Payment.create(
+        payment_config_test(amount, **metadata),
+        payment_id
+    )
+
+    logger.info(f"payment_data: {payment.confirmation.confirmation_url}")
     return payment.confirmation.confirmation_url, payment.id

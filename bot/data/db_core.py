@@ -11,10 +11,10 @@ class Base(DeclarativeBase): pass
 
 
 # Штука для FastAPI
-# async def get_session() -> AsyncSession:
-#     session = local_session()
-#     try:
-#         yield session
-#     finally:
-#         session.close()
+async def get_session() -> AsyncSession:
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
 

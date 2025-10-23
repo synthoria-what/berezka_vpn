@@ -28,9 +28,8 @@ class SqlQueries:
             if user:
                 logger.info("sql, user found, return")
                 return "Такой пользователь уже есть"
-            ref_url = f"https://t.me/{config.bot_name}?start={uuid.uuid4()}"
             new_user = User(username=username, telegram_chat_id=tg_id, 
-                            ref_url=ref_url, subscription_url=subscription_url)
+                            subscription_url=subscription_url)
             session.add(new_user)
             logger.info(f"sql, create_user: data, {new_user}")
             await session.commit()

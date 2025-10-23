@@ -35,21 +35,35 @@ class UserDataMiddleware(BaseMiddleware):
         event: Message | CallbackQuery,
         data: Dict[str, Any],
     ) -> Any:
-        tg_id = (
-            event.message.chat.id
-            if isinstance(event, CallbackQuery)
-            else event.chat.id
-        )
+        if isinstance(event, CallbackQuery):
+            tg_id = event.from_user.id  # Для CallbackQuery используем from_user.id
+        else:  # Message
+            tg_id = event.chat.id
+            
+        logger.info(f"tg_id: {tg_id}")
 
         if isinstance(event, Message) and event.text and event.text.startswith("/start"):
             return await handler(event, data)
+
 
         user_data = await sql_queries.get_user(tg_id=tg_id)
 
         if user_data is None:
             msg = event.message if isinstance(event, CallbackQuery) else event
             await msg.answer("Пользователь не зарегистрирован. Пожалуйста, используйте /start.")
-            raise CancelHandler()
+            return
+        
+        logger.info(f"sub_url: {user_data.subscription_url} {type(user_data.subscription_url)}")
+        
+        if isinstance(event, Message) and event.text and event.text.startswith("Подключиться"):
+            data["user_data"] = user_data
+            return await handler(event, data)
+        
+        if user_data.subscription_url == 'None':
+            msg = event.message if isinstance(event, CallbackQuery) else event
+            await msg.answer("У вас еще нет подписки, нажмите на `Подключиться` для получения тестовой подписки", parse_mode="MarkdownV2")
+            return
+        
 
         data["user_data"] = user_data
         return await handler(event, data)
@@ -57,7 +71,7 @@ class UserDataMiddleware(BaseMiddleware):
 
 
 class RateLimitMiddleware(BaseMiddleware):
-    def __init__(self, limit: int = 5, period: int = 10):
+    def __init__(self, limit: int = 5, period: int = 5):
         """
         :param limit: сколько сообщений можно за период
         :param period: период времени в секундах

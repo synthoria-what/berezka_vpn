@@ -73,8 +73,10 @@ class ProxyClient:
         status: str - Статус ключа
 
         """
-        await self.get_token()
-        user = UserModify(username=username, **kwargs)
-        await self.api.modify_user(username, user, ProxyClient.TOKEN)
-        
+        try:
+            await self.get_token()
+            user = UserModify(username=username, **kwargs)
+            await self.api.modify_user(username, user, ProxyClient.TOKEN)
+        except Exception as ex:
+            logger.info(f"Произошла ошибка при обновлении подписки: {ex}")
 
