@@ -3,7 +3,6 @@ from aiogram import Bot
 from logger import Logger
 from proxy_client import ProxyClient
 from config import TariffConfig, config
-import requests
 
 app = FastAPI()
 logger = Logger.getinstance()
@@ -32,16 +31,18 @@ async def webhook(request: Request):
         
         if tariff_type in tariffs.tariffs:
             logger.info(f"Подписка {tariff_type} нашлась в сервисе")
-            tariff = vars(tariffs.tariffs[tariff_type])
+            tariff = tariffs.tariffs[tariff_type]
             try:
                 await proxy_client.get_user(username)
-                await proxy_client.edit_user(username, **tariff)
+                await proxy_client.edit_user(username, expire=tariffs.get_proxy_config(tariff_type)["expire"],
+                                                       data_limit=tariffs.get_proxy_config(tariff_type)["data_limit"])
             except:
-                await proxy_client.create_user(username, **tariff)
+                await proxy_client.create_user(username, expire=tariffs.get_proxy_config(tariff_type),
+                                                       data_limit=tariffs.get_proxy_config(tariff_type))
             await bot.send_message(int(chat_id), text='Подписка была успешно оплачена')
     else:
         logger.error("Оплата была отменена")
-        await bot.send_message(chat_id, text='Произошла ошибка при оплате подписки')
+        await bot.send_message(int(chat_id), text='Произошла ошибка при оплате подписки')
         
     return {"status": 200}
         

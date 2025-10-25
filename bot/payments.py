@@ -11,10 +11,10 @@ load_dotenv()
 logger = Logger.getinstance()
 
 
-# Configuration.account_id = config.yookassa_shop_id
-# Configuration.secret_key = config.yookassa_sk
-Configuration.account_id = config.yookassa_shop_id_test
-Configuration.secret_key = config.yookassa_sk_test
+Configuration.account_id = config.yookassa_shop_id
+Configuration.secret_key = config.yookassa_sk
+# Configuration.account_id = config.yookassa_shop_id_test
+# Configuration.secret_key = config.yookassa_sk_test
 
 def create_payment(amount: int, chat_id: int, 
                    type_payment: str = "sbp"):
@@ -40,7 +40,7 @@ def create_payment_test(amount: int, username: str, chat_id: int, tariff_id: str
     metadata = {
         "username": username,
         "chat_id": chat_id,
-        "tariff_id": tariff_id,
+        "tariff_type": tariff_id,
         **extra  # можно добавить всё, что хочешь
     }
 

@@ -40,7 +40,7 @@ class SubPriceStars:
 
 class SubPriceRub:
     def __init__(self):
-        self.first_tariff = 1
+        self.first_tariff = 89
         self.second_tariff = 199
         self.third_tariff = 359
         self.fourth_tariff = 699
