@@ -25,6 +25,7 @@ class Config(BaseSettings):
     mb_username: str = Field(alias="MARZBAN_USERNAME")
     mb_passw: str = Field(alias="MARZBAN_PASSW")
     mb_api_url: str = Field(alias="MARZBAN_API_URL")
+    admins_ids: list[int] = Field(default_factory=list, env="ADMINS_IDS")
 
     class Config:
         env_file = ".env"
@@ -118,12 +119,20 @@ class TariffConfig:
             )
         }
 
-    def get_proxy_config(self, tariff_id: str) -> dict:
+    def get_proxy_config(self, tariff_id: str, current_expire: int | None = None) -> dict:
         """Формирует конфиг для прокси: expire в Unix time"""
         tariff = self.tariffs[tariff_id]
-        current_time = int(time.time())
+        now = int(time.time())
+
+        # если подписка активна — прибавляем к ней
+        if current_expire and current_expire > now:
+            expire = current_expire + tariff.duration
+        else:
+            # если истекла или не задана — ставим с текущего момента
+            expire = now + tariff.duration
+
         return {
-            "expire": current_time + tariff.duration,
+            "expire": expire,
             "data_limit": tariff.data_limit
         }
 

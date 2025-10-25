@@ -20,25 +20,38 @@ async def webhook(request: Request):
     chat_id = metadata.get("chat_id")
     username = metadata.get("username")
     tariff_type = metadata.get("tariff_type")
+    expire = metadata.get("expire_time")
     logger.info(f"data: {data}")
     logger.info(f"event: {event}")
     logger.info(f"metadata: {metadata}")
     logger.info(f"chat_id: {chat_id}")
     logger.info(f"username: {username}")
     logger.info(f"tariff_type: {tariff_type}")
+    logger.info(f"expire_time: {expire}")
     if event == "payment.succeeded":
         logger.info("Вебхук подтвердил оплату")
         
         if tariff_type in tariffs.tariffs:
             logger.info(f"Подписка {tariff_type} нашлась в сервисе")
-            tariff = tariffs.tariffs[tariff_type]
             try:
-                await proxy_client.get_user(username)
-                await proxy_client.edit_user(username, expire=tariffs.get_proxy_config(tariff_type)["expire"],
-                                                       data_limit=tariffs.get_proxy_config(tariff_type)["data_limit"])
-            except:
-                await proxy_client.create_user(username, expire=tariffs.get_proxy_config(tariff_type),
-                                                       data_limit=tariffs.get_proxy_config(tariff_type))
+                # Получаем текущие данные пользователя
+                user_info = await proxy_client.get_user(username)
+                current_expire = expire
+
+                # Генерируем конфиг с учётом старого expire
+                config = tariffs.get_proxy_config(tariff_type, current_expire=current_expire)
+
+                # Обновляем пользователя
+                await proxy_client.edit_user(
+                    username,
+                    expire=config["expire"],
+                    data_limit=config["data_limit"]
+                )
+
+                logger.info(f"Подписка {tariff_type} продлена до {config['expire']}")
+
+            except Exception as e:
+                logger.error(f"Ошибка при продлении подписки: {e}")
             await bot.send_message(int(chat_id), text='Подписка была успешно оплачена')
     else:
         logger.error("Оплата была отменена")

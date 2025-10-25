@@ -2,6 +2,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from config import config
 from middleware import UserDataMiddleware, LoggingBotMiddleware, RateLimitMiddleware
+from data.db_core import init_db
 
 from router import router
 from logger import Logger
@@ -21,6 +22,7 @@ dp.callback_query.middleware(RateLimitMiddleware())
 async def start() -> None:
     print("bot started")
     logger.info("bot started")
+    await init_db()
     try:
         dp.include_router(router)
         await dp.start_polling(bot)

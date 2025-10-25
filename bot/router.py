@@ -1,6 +1,8 @@
 from aiogram import Router, Bot, F
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, LabeledPrice, CallbackQuery
+from aiogram.types import Message, LabeledPrice, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from data.models.users import User
 from keyboards import *
 from config import config, TariffConfig
@@ -22,8 +24,11 @@ faker = Faker()
 sql_queries = SqlQueries()
 
 
-ADMIN_IDS = [863618184]
+ADMIN_IDS = config.admins_ids
 
+
+class SendMessage(StatesGroup):
+    message = State()
 
 # ======================================================== Логика ======================================================== #
 
@@ -66,10 +71,13 @@ async def create_payment_message(handler: CallbackQuery, tariff_id: str):
     logger.info("create_payment_messge")
     tariff = tariff_config.tariffs[tariff_id]
     username = handler.from_user.username
+    proxy_user = await proxy.get_user(username)
+    logger.warning(f"{proxy_user}")
     yookassa_qr_url, _ = create_payment_test(tariff.price_rub, 
                                              chat_id=handler.message.chat.id, 
                                              tariff_id=tariff_id,
-                                             username=username)
+                                             username=username,
+                                             expire=proxy_user.expire)
     # yookassa_card_url, _ = create_payment(tariff.price_rub, handler.message.chat.id)
     sub_link = await invoice_link(tariff.price_stars, tariff_config.get_subscription_config(tariff_id)["expire"])
     await handler.message.answer(text=f"<b>Вы выбрали тариф:</b> {tariff.name}\n"
@@ -85,6 +93,7 @@ async def create_payment_message(handler: CallbackQuery, tariff_id: str):
 
 @router.message(CommandStart())
 async def hello(message: Message):
+    logger.info("command /start")
     check_ref_url = message.text.split(" ")
     if len(check_ref_url) > 1 and message.chat.id != int(check_ref_url[-1]):
         logger.warning("Пользователь перешел по реферальной ссылке")
@@ -94,11 +103,13 @@ async def hello(message: Message):
             print(ref_user.users_invited)
             user = await sql_queries.edit_user(int(check_ref_url[-1]), users_invited=ref_user.users_invited + 1)
             logger.info(f"user-data: {user.users_invited}")
-    logger.info("command /start")
     fake_username = faker.domain_name(2)
     fake_username = fake_username.split(".")[1]
     username = message.from_user.username if message.from_user.username is not None else fake_username
     await sql_queries.create_user(username=username, tg_id=message.chat.id)
+    user = await sql_queries.get_user(message.chat.id)
+    if user.telegram_chat_id in ADMIN_IDS:
+        await sql_queries.edit_user(message.chat.id, role="admin")
     await message.answer(f"Привет {username}.\nЭто бот для покупки подписки на впн", reply_markup=menu_keyboard())
 
     
@@ -130,6 +141,16 @@ async def profile(message: Message, user_data: User):
     "Нет срока" if api_user.expire == None
     else f"{datetime.fromtimestamp(api_user.expire).strftime('%Y-%m-%d')}"
     )
+    
+    # Формируем клавиатуру только если пользователь админ
+    keyboard = None
+    if user_data.role == "admin":  # или проверка через ADMINS_IDS
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="Открыть админ-панель", callback_data="open_admin_panel")]
+            ]
+        )
+    
     await message.answer("Данные по вашей подписке:\n"
                         f"🕒 Действует до: `{expire_str}`\n"
                         "🌍 Сервер: Хельсинки\n"
@@ -138,17 +159,22 @@ async def profile(message: Message, user_data: User):
                         "🔗 Ваша реферальная ссылка:\n"
                         f"`https://t.me/test_invite_send_bot?start={message.chat.id}`\n"
                         f"Пользователей пригалашено: {user_data.users_invited}",
-                        parse_mode="MarkdownV2")
+                        parse_mode="MarkdownV2", reply_markup=keyboard)
     
 @router.message(F.text == "Подключиться")
 async def connect(message: Message, user_data):
     logger.info("connect user")
     logger.info(f"sub_url: {user_data.subscription_url}")
-    if user_data.subscription_url == 'None':
-        proxy_url = await proxy.create_user(user_data.username, expire=0, data_limit=100_000_000)
-        await sql_queries.edit_user(user_data.telegram_chat_id, subscription_url=proxy_url)
-    else:
-        proxy_url = user_data.subscription_url
+    try:
+        proxy_user = await proxy.get_user(user_data.username)
+        proxy_url = proxy_user.subscription_url
+        await sql_queries.edit_user(message.chat.id, subscription_url=proxy_url)
+    except:
+        if user_data.subscription_url == 'None':
+            proxy_url = await proxy.create_user(user_data.username, expire=0, data_limit=100_000_000)
+            await sql_queries.edit_user(user_data.telegram_chat_id, subscription_url=proxy_url)
+        else:
+            proxy_url = user_data.subscription_url
     await message.answer(f"Твоя ссылка для подлкючения к впн:\n{proxy_url}")
 
 @router.callback_query(lambda call: call.data.startswith("sub:"))
@@ -162,17 +188,55 @@ async def tariff_info(call: CallbackQuery):
 
 # ======================================================== Админские штуки ======================================================== #
 
-@router.message(Command("users"))
+
+@router.message(Command("admin"))
 @admin_only
-async def show_users(message: Message):
+async def admin_menu(message: Message):
+    await message.answer(f"Здравствйте {message.from_user.username}",reply_markup=admin_menu_keyboard())
+    
+
+@router.callback_query(F.data == "admin_profile")
+@admin_only
+async def admin_profile(call: CallbackQuery, user_data):
+    api_user = await proxy.get_user(user_data.username)
+    expire_str = (
+    "Нет срока" if api_user.expire == None
+    else f"{datetime.fromtimestamp(api_user.expire).strftime('%Y-%m-%d')}"
+    )
+    await call.message.answer("Данные по вашей подписке:\n"
+                        f"🕒 Действует до: `{expire_str}`\n"
+                        "🌍 Сервер: Хельсинки\n"
+                       f"💾 Использовано трафика: {api_user.used_traffic}\n"
+                        "\n"
+                        "🔗 Ваша реферальная ссылка:\n"
+                        f"`https://t.me/test_invite_send_bot?start={call.message.chat.id}`\n"
+                        f"Пользователей пригалашено: {user_data.users_invited}",
+                        parse_mode="MarkdownV2")
+    
+@router.callback_query(F.data == "manager_users")
+@admin_only
+async def show_users(call: CallbackQuery):
     users = await sql_queries.get_users()
     if not users:
-        await message.answer("Пользователи не найдены.")
+        await call.message.answer("Пользователи не найдены.")
         return
 
     keyboard = create_users_keyboard(users, page=1)
-    await message.answer("Список всех пользователей:", reply_markup=keyboard)
+    await call.message.answer("Список всех пользователей:", reply_markup=keyboard)
 
+
+@router.callback_query(F.data == "send_message_all")
+@admin_only
+async def send_message_all(call: CallbackQuery, state: FSMContext):
+    await call.message.answer("Напишите сообщение которое хотите отправить всем пользователям")
+    await state.set_data({"message": call.message.text})
+    await state.set_state(SendMessage.message)
+    
+
+@router.message(SendMessage.message)
+async def send_message_all_confirm(message: Message, state: FSMContext):
+    data = state.get_data()
+    await message.answer(f"data: {data}")
 
 @router.callback_query(lambda call: call.data.startswith("user:"))
 @admin_only
@@ -191,27 +255,6 @@ async def users_page_callback(callback: CallbackQuery):
     await callback.message.edit_text("Список всех пользователей:", reply_markup=keyboard)
     await callback.answer()  # убирает «часики» в Telegram
 
-@router.message(Command("test_middle_data"))
-@admin_only
-async def test(message: Message, user_data: User):
-    # logger.info(f"middle_data: User, {user_data["user_data"]["username"]}")
-    await message.answer(f"{user_data.username}")
-
-@router.message(Command("connect"))
-@admin_only
-async def connect(message: Message, user_data):
-    logger.info("connect user")
-    data = await sql_queries.get_user(tg_id=message.chat.id)
-    username = data.username
-    proxy_url = await proxy.create_user(username, expire=0, data_limit=100_000_000)
-    await message.answer(f"Твоя ссылка для подлкючения к впн:\n{proxy_url}")
-
-@router.message(Command("edit_user"))
-@admin_only
-async def edit_user(message: Message, user_data):
-    data = await sql_queries.get_user(tg_id=message.chat.id)
-    username = data.username
-    await proxy.edit_user(username, expire=0, data_limit=0)
 
 @router.callback_query(lambda call: call.data.startswith("del_user:"))
 @admin_only

@@ -2,6 +2,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeybo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from math import ceil
 
+
 def payment_keyboard(link: str | None = None) -> InlineKeyboardMarkup:
     if not link is None:
         keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='Оплатить', url=link)]])
@@ -77,4 +78,16 @@ def admin_manage_profile(tg_id: int):
 
     builder.adjust(1)
     return builder.as_markup()
+
+
+def admin_menu_keyboard():
+    builder = InlineKeyboardBuilder()
+    builder.button(text="Посмотреть профиль", callback_data="admin_profile")
+    builder.button(text="Управление профилями", callback_data="manager_users")
+    builder.button(text="Написать всем пользователям", callback_data="send_message_all")
+    builder.button(text="Написать конкретному пользователю", callback_data="send_message_one")
+    
+    builder.adjust(1)
+    return builder.as_markup()
+    
 
